@@ -7,37 +7,17 @@
     </div>
 
     <div class="row">
+        {% for course in courses %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <img src="https://placehold.co/600x400/339af0/white?text=Web" class="card-img-top" alt="Web Development">
+                <img src="{{ course.image_url }}" class="card-img-top" alt="{{ course.title }}">
                 <div class="card-body">
-                    <h5 class="card-title">Web Development</h5>
-                    <p class="card-text">Master front-end and back-end technologies to build modern, responsive websites and applications.</p>
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <p class="card-text">{{ course.description }}</p>
                     <a href="#" class="btn btn-primary">Explore Course</a>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <img src="https://placehold.co/600x400/40c057/white?text=Mobile" class="card-img-top" alt="Mobile App Development">
-                <div class="card-body">
-                    <h5 class="card-title">Mobile App Development</h5>
-                    <p class="card-text">Learn to build beautiful and functional native apps for both Android and iOS platforms.</p>
-                    <a href="#" class="btn btn-primary">Explore Course</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <img src="https://placehold.co/600x400/be4bdb/white?text=AI/ML" class="card-img-top" alt="AI/ML">
-                <div class="card-body">
-                    <h5 class="card-title">AI & Machine Learning</h5>
-                    <p class="card-text">Dive into the world of artificial intelligence, data science, and machine learning models.</p>
-                    <a href="#" class="btn btn-primary">Explore Course</a>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 {% endblock %}

@@ -103,7 +103,8 @@ def home():
         if current_user.role == 'admin':
             return redirect(url_for('dashboard'))
         else:
-            return render_template('user_home.html')
+            all_courses = Course.query.all()
+            return render_template('user_home.html', courses=all_courses)
     return render_template('home.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -242,7 +243,7 @@ def edit_course(course_id):
     course = Course.query.get_or_404(course_id)
     form = CourseForm()
     if form.validate_on_submit():
-        course.title = form.description.data
+        course.title = form.title.data
         course.description = form.description.data
         course.image_url = form.image_url.data
         db.session.commit()

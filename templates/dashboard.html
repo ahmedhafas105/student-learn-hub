@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-    <div class="p-5 mb-4 bg-light rounded-3">
-        <h1 class="display-5 fw-bold">Admin Dashboard</h1>
-        <p class="fs-4">Manage all registered users.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold">Manage Users</h1>
+        <a href="{{ url_for('courses') }}" class="btn btn-success">Manage Courses</a>
     </div>
 
     <table class="table table-striped table-hover">
