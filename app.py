@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,6 +30,14 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         # Check hashed password
         return check_password_hash(self.password_hash, password)
+
+# Course Model for Database
+class Course(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.String(200), nullable=False)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -80,6 +88,12 @@ class EditUserForm(FlaskForm):
             if user:
                 raise ValidationError('That email is already registered. Please choose a different one.')
     
+# Course Form
+class CourseForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired(), Length(min=5, max=100)])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    image_url = StringField('Image URL', validators=[DataRequired()])
+    submit = SubmitField('Create Course')
 
 # Routes Section
 
@@ -157,22 +171,22 @@ def delete_user(user_id):
     return redirect(url_for('dashboard'))
 
 # Route for Toggle Admin Role
-@app.route('/toggle_admin/<int:user_id>', methods=['POST'])
-@login_required
-@admin_required
-def toggle_admin(user_id):
-    user_to_toggle = User.query.get_or_404(user_id)
-    if user_to_toggle.id == current_user.id:
-        flash('You cannot change your own admin status.', 'danger')
-    else:
-        if user_to_toggle.role == 'user':
-            user_to_toggle.role = 'admin'
-            flash(f'{user_to_toggle.username} has been promoted to Admin', 'success')
-        else:
-            user_to_toggle.role = 'user'
-            flash(f'{user_to_toggle.username} has been demoted to User.', 'success')
-        db.session.commit()
-    return redirect(url_for('dashboard'))
+# @app.route('/toggle_admin/<int:user_id>', methods=['POST'])
+# @login_required
+# @admin_required
+# def toggle_admin(user_id):
+#     user_to_toggle = User.query.get_or_404(user_id)
+#     if user_to_toggle.id == current_user.id:
+#         flash('You cannot change your own admin status.', 'danger')
+#     else:
+#         if user_to_toggle.role == 'user':
+#             user_to_toggle.role = 'admin'
+#             flash(f'{user_to_toggle.username} has been promoted to Admin', 'success')
+#         else:
+#             user_to_toggle.role = 'user'
+#             flash(f'{user_to_toggle.username} has been demoted to User.', 'success')
+#         db.session.commit()
+#     return redirect(url_for('dashboard'))
 
 # Route for Edit User
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
@@ -194,6 +208,62 @@ def edit_user(user_id):
         form.email.data = user_to_edit.email
 
     return render_template('edit_user.html', form=form, user=user_to_edit)
+
+
+# Course Management Routes
+@app.route('/courses')
+@login_required
+@admin_required
+def courses():
+    all_courses = Course.query.all()
+    return render_template('courses.html', courses=all_courses)
+
+@app.route('/add_course', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_course():
+    form = CourseForm()
+    if form.validate_on_submit():
+        new_course = Course(
+            title=form.title.data,
+            description=form.description.data,
+            image_url=form.image_url.data
+        )
+        db.session.add(new_course)
+        db.session.commit()
+        flash('Course added successfully!', 'success')
+        return redirect(url_for('courses'))
+    return render_template('course_form.html', form=form, title='Add New Course')
+
+@app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    form = CourseForm()
+    if form.validate_on_submit():
+        course.title = form.description.data
+        course.description = form.description.data
+        course.image_url = form.image_url.data
+        db.session.commit()
+        flash('Course updated successfully!', 'success')
+        return redirect(url_for('courses'))
+    elif request.method == 'GET':
+        form.title.data = course.title
+        form.description.data = course.description
+        form.image_url.data = course.image_url
+    return render_template('course_form.html', form=form, title='Edit Course')
+
+@app.route('/delete_course/<int:course_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    db.session.delete(course)
+    db.session.commit()
+    flash('Course deleted successfully!', 'success')
+    return redirect(url_for('courses'))
+
 
 # Create database tables
 with app.app_context():
