@@ -96,16 +96,15 @@ class CourseForm(FlaskForm):
     submit = SubmitField('Create Course')
 
 # Routes Section
-@app.route('/user_home')
-@login_required
-def user_home():
-    all_courses = Course.query.all()
-    return render_template('user_home.html', courses=all_courses)
 
 @app.route('/')
 def home():
     if current_user.is_authenticated:
-        return redirect(url_for('user_home'))
+        if current_user.role == 'admin':
+            return redirect(url_for('admin'))
+        else:
+            all_courses = Course.query.all()
+            return render_template('user_home.html', courses=all_courses)
     return render_template('home.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
