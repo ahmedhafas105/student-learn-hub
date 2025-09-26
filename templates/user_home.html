@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <h1 class="display-5 fw-bold">Welcome, {{ current_user.username }}!</h1>
+        <p class="fs-4">Start your learning journey by exploring our courses below.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="https://placehold.co/600x400/339af0/white?text=Web" class="card-img-top" alt="Web Development">
+                <div class="card-body">
+                    <h5 class="card-title">Web Development</h5>
+                    <p class="card-text">Master front-end and back-end technologies to build modern, responsive websites and applications.</p>
+                    <a href="#" class="btn btn-primary">Explore Course</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="https://placehold.co/600x400/40c057/white?text=Mobile" class="card-img-top" alt="Mobile App Development">
+                <div class="card-body">
+                    <h5 class="card-title">Mobile App Development</h5>
+                    <p class="card-text">Learn to build beautiful and functional native apps for both Android and iOS platforms.</p>
+                    <a href="#" class="btn btn-primary">Explore Course</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="https://placehold.co/600x400/be4bdb/white?text=AI/ML" class="card-img-top" alt="AI/ML">
+                <div class="card-body">
+                    <h5 class="card-title">AI & Machine Learning</h5>
+                    <p class="card-text">Dive into the world of artificial intelligence, data science, and machine learning models.</p>
+                    <a href="#" class="btn btn-primary">Explore Course</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

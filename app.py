@@ -1,0 +1,204 @@
+from flask import Flask, render_template, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import request
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'a_very_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login' # Redirect to login page if not logged in
+
+# User Model for Database
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')
+
+    def set_password(self, password):
+        # Hash the password for security
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        # Check hashed password
+        return check_password_hash(self.password_hash, password)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Admin required decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            flash('You don\'t have permission to access this page.', 'danger')
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+class SignupForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=80)])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Sign Up')
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Log In')
+
+class EditUserForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=80)])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Update User')
+
+    def __init__(self, original_username, original_email, *args, **kwargs):
+        super(EditUserForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username
+        self.original_email = original_email
+
+    def validate_username(self, username):
+        if username.data != self.original_username:
+            user = User.query.filter_by(username=self.username.data).first()
+            if user:
+                raise ValidationError('That username is already taken. Please choose a different one.')
+
+    def validate_email(self, email):
+        if email.data != self.original_email:
+            user = User.query.filter_by(email=self.email.data).first()
+            if user:
+                raise ValidationError('That email is already registered. Please choose a different one.')
+    
+
+# Routes Section
+
+@app.route('/')
+def home():
+    if current_user.is_authenticated:
+        if current_user.role == 'admin':
+            return redirect(url_for('dashboard'))
+        else:
+            return render_template('user_home.html')
+    return render_template('home.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignupForm()
+    if form.validate_on_submit():
+        # Check if user already exists
+        existing_user = User.query.filter_by(username=form.username.data).first()
+        if existing_user is None:
+            new_user = User(username=form.username.data, email=form.email.data)
+            new_user.set_password(form.password.data)
+
+            # Check if this is the first user
+            if User.query.count() == 0:
+                new_user.role = 'admin' # Make the first user an admin
+                flash('Admin account created successfully!')
+            else:
+                flash('Account created successfully!')
+
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect(url_for('login'))
+        flash('A user with that username already exists.')
+    return render_template('sign_up.html', form=form)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user)
+
+            if user.role == 'admin':
+                return redirect(url_for('dashboard'))
+            else:
+                return redirect(url_for('home'))
+        flash('Invalid username or password')
+    return render_template('login.html', form=form)
+
+@app.route('/dashboard')
+@login_required
+@admin_required
+def dashboard():
+    users = User.query.all()
+    return render_template('dashboard.html', users=users)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# Route for Delete the User
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    user_to_delete = User.query.get_or_404(user_id)
+    if user_to_delete.id == current_user.id:
+        flash('You cannot delete your own account.', 'danger')
+    else:
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash('User deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+# Route for Toggle Admin Role
+@app.route('/toggle_admin/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_admin(user_id):
+    user_to_toggle = User.query.get_or_404(user_id)
+    if user_to_toggle.id == current_user.id:
+        flash('You cannot change your own admin status.', 'danger')
+    else:
+        if user_to_toggle.role == 'user':
+            user_to_toggle.role = 'admin'
+            flash(f'{user_to_toggle.username} has been promoted to Admin', 'success')
+        else:
+            user_to_toggle.role = 'user'
+            flash(f'{user_to_toggle.username} has been demoted to User.', 'success')
+        db.session.commit()
+    return redirect(url_for('dashboard'))
+
+# Route for Edit User
+@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    user_to_edit = User.query.get_or_404(user_id)
+    form = EditUserForm(original_username=user_to_edit.username, original_email=user_to_edit.email)
+
+    if form.validate_on_submit():
+        user_to_edit.username = form.username.data
+        user_to_edit.email = form.email.data
+        db.session.commit()
+        flash('User details updated successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    elif request.method == 'GET':
+        form.username.data = user_to_edit.username
+        form.email.data = user_to_edit.email
+
+    return render_template('edit_user.html', form=form, user=user_to_edit)
+
+# Create database tables
+with app.app_context():
+    db.create_all()
+
+# Run the app
+if __name__ == '__main__':
+    app.run(debug=True)
