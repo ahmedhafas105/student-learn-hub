@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="list-group">
+            <a href="{{ url_for('admin', view='users') }}" class="list-group-item list-group-item-action {% if active_view == 'users' %}active{% endif %}">
+                Manage Users
+            </a>
+            <a href="{{ url_for('admin', view='courses') }}" class="list-group-item list-group-item-action {% if active_view == 'courses' %}active{% endif %}">
+                Manage Courses
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        {% if active_view == 'users' %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 fw-bold">Manage Users</h1>
+            </div>
+            {% include '_user_table.html' %}
+
+        {% elif active_view == 'courses' %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 fw-bold">Manage Courses</h1>
+                <a href="{{ url_for('add_course') }}" class="btn btn-primary">Add New Course</a>
+            </div>
+            {% include '_course_table.html' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
