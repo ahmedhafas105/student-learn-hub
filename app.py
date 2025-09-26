@@ -101,7 +101,7 @@ class CourseForm(FlaskForm):
 def home():
     if current_user.is_authenticated:
         if current_user.role == 'admin':
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('admin'))
         else:
             all_courses = Course.query.all()
             return render_template('user_home.html', courses=all_courses)
@@ -139,18 +139,25 @@ def login():
             login_user(user)
 
             if user.role == 'admin':
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('admin'))
             else:
                 return redirect(url_for('home'))
         flash('Invalid username or password')
     return render_template('login.html', form=form)
 
-@app.route('/dashboard')
+@app.route('/admin')
 @login_required
 @admin_required
-def dashboard():
-    users = User.query.all()
-    return render_template('dashboard.html', users=users)
+def admin():
+    view = request.args.get('view', 'users')
+
+    if view == 'users':
+        data = User.query.all()
+    elif view == 'courses':
+        data = Course.query.all()
+    else:
+        return redirect(url_for('admin', view='users'))
+    return render_template('admin_panel.html', active_view=view, data=data)
 
 @app.route('/logout')
 def logout():
@@ -169,25 +176,7 @@ def delete_user(user_id):
         db.session.delete(user_to_delete)
         db.session.commit()
         flash('User deleted successfully!', 'success')
-    return redirect(url_for('dashboard'))
-
-# Route for Toggle Admin Role
-# @app.route('/toggle_admin/<int:user_id>', methods=['POST'])
-# @login_required
-# @admin_required
-# def toggle_admin(user_id):
-#     user_to_toggle = User.query.get_or_404(user_id)
-#     if user_to_toggle.id == current_user.id:
-#         flash('You cannot change your own admin status.', 'danger')
-#     else:
-#         if user_to_toggle.role == 'user':
-#             user_to_toggle.role = 'admin'
-#             flash(f'{user_to_toggle.username} has been promoted to Admin', 'success')
-#         else:
-#             user_to_toggle.role = 'user'
-#             flash(f'{user_to_toggle.username} has been demoted to User.', 'success')
-#         db.session.commit()
-#     return redirect(url_for('dashboard'))
+    return redirect(url_for('admin', view='users'))
 
 # Route for Edit User
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
@@ -202,8 +191,7 @@ def edit_user(user_id):
         user_to_edit.email = form.email.data
         db.session.commit()
         flash('User details updated successfully!', 'success')
-        return redirect(url_for('dashboard'))
-    
+        return redirect(url_for('admin', view='users'))
     elif request.method == 'GET':
         form.username.data = user_to_edit.username
         form.email.data = user_to_edit.email
@@ -212,13 +200,6 @@ def edit_user(user_id):
 
 
 # Course Management Routes
-@app.route('/courses')
-@login_required
-@admin_required
-def courses():
-    all_courses = Course.query.all()
-    return render_template('courses.html', courses=all_courses)
-
 @app.route('/add_course', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -233,7 +214,7 @@ def add_course():
         db.session.add(new_course)
         db.session.commit()
         flash('Course added successfully!', 'success')
-        return redirect(url_for('courses'))
+        return redirect(url_for('admin', view='courses'))
     return render_template('course_form.html', form=form, title='Add New Course')
 
 @app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
@@ -248,7 +229,7 @@ def edit_course(course_id):
         course.image_url = form.image_url.data
         db.session.commit()
         flash('Course updated successfully!', 'success')
-        return redirect(url_for('courses'))
+        return redirect(url_for('admin', view='courses'))
     elif request.method == 'GET':
         form.title.data = course.title
         form.description.data = course.description
@@ -259,11 +240,11 @@ def edit_course(course_id):
 @login_required
 @admin_required
 def delete_course(course_id):
-    course = Course.query.get_or_404(course_id)
+    course = db.session.get(Course, course_id)
     db.session.delete(course)
     db.session.commit()
     flash('Course deleted successfully!', 'success')
-    return redirect(url_for('courses'))
+    return redirect(url_for('admin', view='courses'))
 
 
 # Create database tables
