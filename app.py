@@ -113,13 +113,13 @@ def signup():
             new_user.set_password(form.password.data)
             if User.query.count() == 0:
                 new_user.role = 'admin'
-                flash('Admin account created successfully!')
+                flash('Admin account created successfully!', 'success')
             else:
-                flash('Account created successfully!')
+                flash('Account created successfully!', 'success')
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('login'))
-        flash('A user with that username already exists.')
+        flash('A user with that username already exists.', 'danger')
 
     return render_template('sign_up.html', form=form)
 
@@ -135,14 +135,16 @@ def login():
                 return redirect(url_for('admin'))
             else:
                 flash('Logged in successfully!', 'success')
-                return redirect(url_for('home'))
-        flash('Invalid username or password')
+                return redirect(url_for('user_home'))
+        flash('Invalid username or password', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/logout')
-@login_required # ADDED: Protection
+@login_required 
 def logout():
     logout_user()
+    # Added a more specific flash message
+    flash('You have been successfully logged out.', 'success') 
     return redirect(url_for('home'))
 
 # --- ADMIN ROUTES ---

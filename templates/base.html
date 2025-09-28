@@ -27,24 +27,24 @@
 
         {% if current_user.is_authenticated %}
             <aside class="bg-white flex-col hidden lg:flex group w-20 hover:w-64 transition-all duration-300 ease-in-out">
-                <div class="flex items-center justify-center group-hover:justify-start gap-3 h-16 px-6 flex-shrink-0">
+                <div class="flex items-center justify-center group-hover:justify-start gap-3 h-16 px-6 flex-shrink-0 flex-nowrap">
                     <div class="w-8 h-8 bg-primary rounded-full flex-shrink-0"></div>
-                    <h1 class="font-bold text-xl text-slate-900 hidden group-hover:inline transition-all">My App</h1>
+                    <h1 class="font-bold text-xl text-slate-900 hidden group-hover:inline transition-all whitespace-nowrap">My App</h1>
                 </div>
                 <nav class="flex flex-col gap-2 p-4">
                     {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin', view='users') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                        <a href="{{ url_for('admin', view='users') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary flex-nowrap {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
                             <span class="material-symbols-outlined">shield_person</span>
-                            <span class="text-sm font-medium hidden group-hover:inline">Admin Panel</span>
+                            <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Admin Panel</span>
                         </a>
                     {% endif %}
-                    <a href="{{ url_for('user_home') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'user_home' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                    <a href="{{ url_for('user_home') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary flex-nowrap {% if request.endpoint == 'user_home' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
                         <span class="material-symbols-outlined">home</span>
-                        <span class="text-sm font-medium hidden group-hover:inline">Home</span>
+                        <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Home</span>
                     </a>
-                    <a href="{{ url_for('logout') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary text-slate-600">
+                    <a href="{{ url_for('logout') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary text-slate-600 flex-nowrap">
                         <span class="material-symbols-outlined">logout</span>
-                        <span class="text-sm font-medium hidden group-hover:inline">Logout</span>
+                        <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Logout</span>
                     </a>
                 </nav>
             </aside>
