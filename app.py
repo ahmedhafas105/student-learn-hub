@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField
@@ -6,16 +6,15 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationE
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from flask import request
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a_very_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login' # Redirect to login page if not logged in
+login_manager.login_view = 'login'
 
-# User Model for Database
+# --- MODELS ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -24,26 +23,23 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='user')
 
     def set_password(self, password):
-        # Hash the password for security
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        # Check hashed password
         return check_password_hash(self.password_hash, password)
 
-# Course Model for Database
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.String(200), nullable=False)
 
-
+# --- LOGIN MANAGER ---
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # FIXED: Use modern db.session.get()
+    return db.session.get(User, int(user_id))
 
-# Admin required decorator
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -53,7 +49,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
+# --- FORMS ---
 class SignupForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=80)])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -80,24 +76,26 @@ class EditUserForm(FlaskForm):
         if username.data != self.original_username:
             user = User.query.filter_by(username=self.username.data).first()
             if user:
-                raise ValidationError('That username is already taken. Please choose a different one.')
+                raise ValidationError('That username is already taken.')
 
     def validate_email(self, email):
         if email.data != self.original_email:
             user = User.query.filter_by(email=self.email.data).first()
             if user:
-                raise ValidationError('That email is already registered. Please choose a different one.')
+                raise ValidationError('That email is already registered.')
     
-# Course Form
 class CourseForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=5, max=100)])
     description = TextAreaField('Description', validators=[DataRequired()])
     image_url = StringField('Image URL', validators=[DataRequired()])
-    submit = SubmitField('Create Course')
+    submit = SubmitField('Save Course')
 
-# =====================================================================================================================
-# |                                                 Routes Section                                                    |
-# =====================================================================================================================
+# --- ROUTES ---
+@app.route('/')
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('user_home'))
+    return render_template('home.html')
 
 @app.route('/user_home')
 @login_required
@@ -105,33 +103,24 @@ def user_home():
     all_courses = Course.query.all()
     return render_template('user_home.html', courses=all_courses)
 
-@app.route('/')
-def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('user_home'))
-    return render_template('home.html')
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = SignupForm()
     if form.validate_on_submit():
-        # Check if user already exists
         existing_user = User.query.filter_by(username=form.username.data).first()
         if existing_user is None:
             new_user = User(username=form.username.data, email=form.email.data)
             new_user.set_password(form.password.data)
-
-            # Check if this is the first user
             if User.query.count() == 0:
-                new_user.role = 'admin' # Make the first user an admin
+                new_user.role = 'admin'
                 flash('Admin account created successfully!')
             else:
                 flash('Account created successfully!')
-
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for('login'))
         flash('A user with that username already exists.')
+    # FIXED: Template name typo
     return render_template('sign_up.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -141,7 +130,6 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-
             if user.role == 'admin':
                 return redirect(url_for('admin'))
             else:
@@ -149,47 +137,57 @@ def login():
         flash('Invalid username or password')
     return render_template('login.html', form=form)
 
+@app.route('/logout')
+@login_required # ADDED: Protection
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# --- ADMIN ROUTES ---
 @app.route('/admin')
 @login_required
 @admin_required
 def admin():
     view = request.args.get('view', 'users')
-
+    data = None
     if view == 'users':
         data = User.query.all()
     elif view == 'courses':
         data = Course.query.all()
     else:
         return redirect(url_for('admin', view='users'))
-    return render_template('admin_panel.html', active_view=view, data=data)
+    
+    form = EditUserForm(original_username=None, original_email=None)
+    course_form = CourseForm()
+    return render_template('admin_panel.html', active_view=view, data=data, form=form, course_form=course_form)
 
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-# Route for Delete the User
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
 def delete_user(user_id):
-    user_to_delete = User.query.get_or_404(user_id)
+    # FIXED: Use modern db.session.get()
+    user_to_delete = db.session.get(User, user_id)
+    if not user_to_delete:
+        flash("User not found.", "danger")
+        return redirect(url_for('admin', view='users'))
     if user_to_delete.id == current_user.id:
-        flash('You cannot delete your own account.', 'danger')
+        flash("You cannot delete your own account.", "danger")
     else:
         db.session.delete(user_to_delete)
         db.session.commit()
-        flash('User deleted successfully!', 'success')
+        flash("User deleted successfully!", "success")
     return redirect(url_for('admin', view='users'))
 
-# Route for Edit User
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def edit_user(user_id):
-    user_to_edit = User.query.get_or_404(user_id)
+    # FIXED: Use modern db.session.get()
+    user_to_edit = db.session.get(User, user_id)
+    if not user_to_edit:
+        flash("User not found.", "danger")
+        return redirect(url_for('admin', view='users'))
     form = EditUserForm(original_username=user_to_edit.username, original_email=user_to_edit.email)
-
     if form.validate_on_submit():
         user_to_edit.username = form.username.data
         user_to_edit.email = form.email.data
@@ -199,22 +197,15 @@ def edit_user(user_id):
     elif request.method == 'GET':
         form.username.data = user_to_edit.username
         form.email.data = user_to_edit.email
-
     return render_template('edit_user.html', form=form, user=user_to_edit)
 
-
-# Course Management Routes
 @app.route('/add_course', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def add_course():
     form = CourseForm()
     if form.validate_on_submit():
-        new_course = Course(
-            title=form.title.data,
-            description=form.description.data,
-            image_url=form.image_url.data
-        )
+        new_course = Course(title=form.title.data, description=form.description.data, image_url=form.image_url.data)
         db.session.add(new_course)
         db.session.commit()
         flash('Course added successfully!', 'success')
@@ -225,7 +216,11 @@ def add_course():
 @login_required
 @admin_required
 def edit_course(course_id):
-    course = Course.query.get_or_404(course_id)
+    # FIXED: Use modern db.session.get()
+    course = db.session.get(Course, course_id)
+    if not course:
+        flash("Course not found.", "danger")
+        return redirect(url_for('admin', view='courses'))
     form = CourseForm()
     if form.validate_on_submit():
         course.title = form.title.data
@@ -244,17 +239,19 @@ def edit_course(course_id):
 @login_required
 @admin_required
 def delete_course(course_id):
+    # FIXED: Use modern db.session.get()
     course = db.session.get(Course, course_id)
-    db.session.delete(course)
-    db.session.commit()
-    flash('Course deleted successfully!', 'success')
+    if course:
+        db.session.delete(course)
+        db.session.commit()
+        flash('Course deleted successfully!', 'success')
+    else:
+        flash("Course not found.", "danger")
     return redirect(url_for('admin', view='courses'))
 
-
-# Create database tables
+# --- APP RUNNER ---
 with app.app_context():
     db.create_all()
 
-# Run the app
 if __name__ == '__main__':
     app.run(debug=True)
