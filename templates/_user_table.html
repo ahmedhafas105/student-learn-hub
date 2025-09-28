@@ -23,10 +23,17 @@
             </td>
             <td class="px-6 py-4 text-right">
                 {% if user.id != current_user.id %}
-                    <a href="{{ url_for('edit_user', user_id=user.id) }}" class="font-medium text-primary hover:underline">Edit</a>
+                    <button type="button" 
+                        class="font-medium text-primary hover:underline"
+                        data-id="{{ user.id }}"
+                        data-username="{{ user.username }}"
+                        data-email="{{ user.email }}"
+                        onclick="openUserEditModal(this)">
+                        Edit
+                    </button>
                     <span class="mx-1 text-slate-300">|</span>
-                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
-                        <button type="submit" class="font-medium text-red-500 hover:underline">Delete</button>
+                    <form id="delete-form-user-{{ user.id }}" action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" class="inline-block">
+                        <button type="button" onclick="showDeleteConfirm('delete-form-user-{{ user.id }}')" class="font-medium text-red-500 hover:underline">Delete</button>
                     </form>
                 {% endif %}
             </td>
