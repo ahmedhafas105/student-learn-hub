@@ -1,21 +1,108 @@
-{% extends "admin_base.html" %}
+{% extends "base.html" %}
 
-{% block admin_content %}
-    {% if active_view == 'users' %}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Users</h1>
-        </div>
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-            {% include '_user_table.html' %}
-        </div>
+{% block content %}
+    <div class="flex items-center gap-4 mb-4">
+        <span class="material-symbols-outlined text-4xl text-gray-500">shield_person</span>
+        <h1 class="text-3xl font-bold text-slate-900">Admin Panel</h1>
+    </div>
 
-    {% elif active_view == 'courses' %}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Courses</h1>
-            <a href="{{ url_for('add_course') }}" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded hover:bg-primary/90">Add Course</a>
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex gap-6" aria-label="Tabs">
+            <a href="{{ url_for('admin', view='users') }}" 
+               class="shrink-0 border-b-2 px-1 pb-4 text-sm font-medium 
+                      {% if active_view == 'users' %}
+                          border-primary text-primary
+                      {% else %}
+                          border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700
+                      {% endif %}">
+                Users
+            </a>
+            <a href="{{ url_for('admin', view='courses') }}" 
+               class="shrink-0 border-b-2 px-1 pb-4 text-sm font-medium 
+                      {% if active_view == 'courses' %}
+                          border-primary text-primary
+                      {% else %}
+                          border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700
+                      {% endif %}">
+                Courses
+            </a>
+        </nav>
+    </div>
+
+    <div class="mt-8">
+        {% if active_view == 'users' %}
+            <div class="overflow-x-auto bg-white rounded-lg shadow">
+                {% include '_user_table.html' %}
+            </div>
+
+        {% elif active_view == 'courses' %}
+            <div class="flex justify-end mb-4">
+                 <a href="{{ url_for('add_course') }}" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded hover:bg-primary/90">Add New Course</a>
+            </div>
+            <div class="overflow-x-auto bg-white rounded-lg shadow">
+                {% include '_course_table.html' %}
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+{% block modals %}
+<div id="editUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Edit User</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="editUserForm" method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-4 text-left">
+                        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                        <input type="text" name="username" id="modal_username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    </div>
+                    <div class="mb-6 text-left">
+                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                        <input type="email" name="email" id="modal_email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    </div>
+                    <input type="submit" value="Update User" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded">
+                </form>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="closeUserModal" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Cancel
+                </button>
+            </div>
         </div>
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-            {% include '_course_table.html' %}
+    </div>
+</div>
+
+<div id="editCourseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Edit Course</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="editCourseForm" method="POST">
+                    {{ course_form.hidden_tag() }}
+                     <div class="mb-4 text-left">
+                        <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
+                        <input type="text" name="title" id="modal_title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    </div>
+                     <div class="mb-4 text-left">
+                        <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                        <textarea name="description" id="modal_description" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"></textarea>
+                    </div>
+                    <div class="mb-6 text-left">
+                        <label for="image_url" class="block text-gray-700 text-sm font-bold mb-2">Image URL</label>
+                        <input type="text" name="image_url" id="modal_image_url" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    </div>
+                    <input type="submit" value="Update Course" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded">
+                </form>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="closeCourseModal" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                    Cancel
+                </button>
+            </div>
         </div>
-    {% endif %}
+    </div>
+</div>
 {% endblock %}

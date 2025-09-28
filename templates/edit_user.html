@@ -1,31 +1,27 @@
 {% extends "base.html" %}
+
 {% block title %}Edit User{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Edit User: {{ user.username }}</h3>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}" novalidate>
-                    {{ form.hidden_tag() }}
+<div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Edit User: {{ user.username }}</h2>
+    <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}" novalidate>
+        {{ form.hidden_tag() }}
 
-                    <div class="mb-3">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control", size=32) }}
-                    </div>
-
-                    <div class="mb-3">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control", size=32) }}
-                    </div>
-
-                    {{ form.submit(class="btn btn-primary w-100") }}
-                    <a href="{{ url_for('admin', view='users') }}" class="btn btn-secondary w-100 mt-2">Cancel</a>
-                </form>
-            </div>
+        <div class="mb-4">
+            {{ form.username.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.username(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
         </div>
-    </div>
+
+        <div class="mb-6">
+            {{ form.email.label(class="block text-gray-700 text-sm font-bold mb-2") }}
+            {{ form.email(class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline") }}
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('admin', view='users') }}" class="w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancel</a>
+            {{ form.submit(class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline") }}
+        </div>
+    </form>
 </div>
 {% endblock %}
