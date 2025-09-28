@@ -74,7 +74,7 @@
     {% block modals %}{% endblock %}
 
 <script>
-    // Your existing function for delete alerts
+    // function for delete alerts
     function showDeleteConfirm(formId) {
         Swal.fire({
             title: 'Are you sure?',
@@ -90,8 +90,6 @@
             }
         })
     }
-
-    // --- ADD THE MISSING CODE STARTING FROM HERE ---
 
     // --- User Modal Logic ---
     const userModal = document.getElementById('editUserModal');
@@ -153,14 +151,27 @@
         closeCourseBtn.onclick = () => courseModal.classList.add('hidden');
     }
 
-    // --- General Modal Logic to close when clicking outside ---
+    const addCourseModal = document.getElementById('addCourseModal');
+    const closeAddCourseBtn = document.getElementById('closeAddCourseModal');
+
+    function openAddCourseModal() {
+        // We just need to show the modal, no data to populate
+        if (addCourseModal) {
+            addCourseModal.classList.remove('hidden');
+
+            // Optional: Clear form fields from previous attempts
+            document.getElementById('addCourseForm').reset();
+        }
+    }
+    if(closeAddCourseBtn) {
+        closeAddCourseBtn.onclick = () => addCourseModal.classList.add('hidden');
+    }
+
+    // general click-outside-to-close logic
     window.onclick = function(event) {
-        if (event.target == userModal) {
-            userModal.classList.add('hidden');
-        }
-        if (event.target == courseModal) {
-            courseModal.classList.add('hidden');
-        }
+        if (event.target == userModal) { userModal.classList.add('hidden'); }
+        if (event.target == courseModal) { courseModal.classList.add('hidden'); }
+        if (event.target == addCourseModal) { addCourseModal.classList.add('hidden'); }
     }
 </script>
 
