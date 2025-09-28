@@ -5,7 +5,7 @@
             <th scope="col" class="px-6 py-3">Username</th>
             <th scope="col" class="px-6 py-3">Email</th>
             <th scope="col" class="px-6 py-3">Role</th>
-            <th scope="col" class="px-6 py-3 text-right">Actions</th>
+            <th scope="col" class="px-6 py-3 text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -16,12 +16,12 @@
             <td class="px-6 py-4">{{ user.email }}</td>
             <td class="px-6 py-4">
                 {% if user.role == 'admin' %}
-                    <span class="px-2 py-1 text-xs font-medium rounded bg-primary/15 text-primary">Admin</span>
+                    <span class="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-primary">Admin</span>
                 {% else %}
-                    <span class="px-2 py-1 text-xs font-medium rounded bg-slate-50 text-slate-600">User</span>
+                    <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-slate-600">User</span>
                 {% endif %}
             </td>
-            <td class="px-6 py-4 text-right">
+            <td class="px-6 py-4 text-center">
                 {% if user.id != current_user.id %}
                     <button type="button" 
                         class="font-medium text-primary hover:underline"
