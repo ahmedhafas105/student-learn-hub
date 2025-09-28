@@ -120,7 +120,7 @@ def signup():
             db.session.commit()
             return redirect(url_for('login'))
         flash('A user with that username already exists.')
-    # FIXED: Template name typo
+
     return render_template('sign_up.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -131,8 +131,10 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             if user.role == 'admin':
+                flash('Welcome Admin!', 'success')
                 return redirect(url_for('admin'))
             else:
+                flash('Logged in successfully!', 'success')
                 return redirect(url_for('home'))
         flash('Invalid username or password')
     return render_template('login.html', form=form)
