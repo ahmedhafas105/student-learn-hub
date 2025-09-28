@@ -95,7 +95,10 @@ class CourseForm(FlaskForm):
     image_url = StringField('Image URL', validators=[DataRequired()])
     submit = SubmitField('Create Course')
 
-# Routes Section
+# =====================================================================================================================
+# |                                                 Routes Section                                                    |
+# =====================================================================================================================
+
 @app.route('/user_home')
 @login_required
 def user_home():
