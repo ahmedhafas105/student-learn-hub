@@ -23,58 +23,77 @@
 </head>
 <body class="bg-gray-100 font-display text-slate-800">
 
-    <div class="{% if current_user.is_authenticated %}flex min-h-screen{% endif %}">
+<div class="relative min-h-screen lg:flex">
 
-        {% if current_user.is_authenticated %}
-            <aside class="bg-white flex-col hidden lg:flex group w-20 hover:w-64 transition-all duration-300 ease-in-out">
-                <div class="flex items-center justify-center group-hover:justify-start gap-3 h-16 px-6 flex-shrink-0 flex-nowrap">
-                    <div class="w-8 h-8 bg-primary rounded-full flex-shrink-0"></div>
-                    <h1 class="font-bold text-xl text-slate-900 hidden group-hover:inline transition-all whitespace-nowrap">My App</h1>
-                </div>
-                <nav class="flex flex-col gap-2 p-4">
-                    {% if current_user.role == 'admin' %}
-                        <a href="{{ url_for('admin', view='users') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary flex-nowrap {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
-                            <span class="material-symbols-outlined">shield_person</span>
-                            <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Admin Panel</span>
-                        </a>
-                    {% endif %}
-                    <a href="{{ url_for('user_home') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary flex-nowrap {% if request.endpoint == 'user_home' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
-                        <span class="material-symbols-outlined">home</span>
-                        <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Home</span>
+    {% if current_user.is_authenticated %}
+        <aside id="sidebar" class="bg-white flex-col w-64 p-6 fixed inset-y-0 left-0
+                                   lg:relative lg:translate-x-0 
+                                   -translate-x-full transition-transform duration-300 ease-in-out z-30">
+            <div class="flex items-center gap-3 h-16 flex-shrink-0">
+                <div class="w-8 h-8 bg-primary rounded-full"></div>
+                <h1 class="font-bold text-xl text-slate-900">My App</h1>
+            </div>
+            <nav class="flex flex-col gap-2 mt-8">
+                {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('admin', view='users') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                        <span class="material-symbols-outlined">shield_person</span>
+                        <span class="text-sm font-medium">Admin Panel</span>
                     </a>
-                    <a href="{{ url_for('logout') }}" class="flex items-center justify-center group-hover:justify-start gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary text-slate-600 flex-nowrap">
-                        <span class="material-symbols-outlined">logout</span>
-                        <span class="text-sm font-medium hidden group-hover:inline whitespace-nowrap">Logout</span>
-                    </a>
-                </nav>
-            </aside>
-        {% else %}
-            <nav class="bg-white shadow-sm w-full">
-                <div class="container mx-auto px-4">
-                    <div class="flex justify-between items-center py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-primary rounded-full"></div>
-                            <h1 class="font-bold text-xl text-slate-900">My App</h1>
-                        </div>
-                        <div class="flex gap-4">
-                            <a href="{{ url_for('login') }}" class="text-sm font-medium text-slate-600 hover:text-primary px-4 py-2">Login</a>
-                            <a href="{{ url_for('signup') }}" class="text-sm font-medium bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">Sign Up</a>
-                        </div>
+                {% endif %}
+                <a href="{{ url_for('user_home') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'user_home' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="text-sm font-medium">Home</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary text-slate-600">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="text-sm font-medium">Logout</span>
+                </a>
+            </nav>
+        </aside>
+    {% else %}
+        <nav class="bg-white shadow-sm w-full absolute">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary rounded-full"></div>
+                        <h1 class="font-bold text-xl text-slate-900">My App</h1>
+                    </div>
+                    <div class="flex gap-4">
+                        <a href="{{ url_for('login') }}" class="text-sm font-medium text-slate-600 hover:text-primary px-4 py-2">Login</a>
+                        <a href="{{ url_for('signup') }}" class="text-sm font-medium bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">Sign Up</a>
                     </div>
                 </div>
-            </nav>
+            </div>
+        </nav>
+    {% endif %}
+
+    <div class="flex-1 flex flex-col">
+        {% if current_user.is_authenticated %}
+            <header class="bg-white p-4 flex justify-between items-center lg:hidden shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary rounded-full"></div>
+                    <h1 class="font-bold text-xl text-slate-900">My App</h1>
+                </div>
+                <button id="menu-btn" class="text-slate-800">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </header>
         {% endif %}
-        
-        <main class="{% if current_user.is_authenticated %}flex-1 p-6 lg:p-10{% else %}container mx-auto mt-10 px-4{% endif %}">
+
+        <main class="w-full {% if current_user.is_authenticated %}p-6 lg:p-10{% else %}pt-24 container mx-auto px-4{% endif %}">
             {% include '_flash_messages.html' %}
+            
             {% block content %}{% endblock %}
         </main>
     </div>
+</div>
 
-    {% block modals %}{% endblock %}
+<div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
+{% block modals %}{% endblock %}
 
 <script>
-    // function for delete alerts
+    // Your existing function for delete alerts - NO CHANGES HERE
     function showDeleteConfirm(formId) {
         Swal.fire({
             title: 'Are you sure?',
@@ -91,87 +110,91 @@
         })
     }
 
-    // --- User Modal Logic ---
-    const userModal = document.getElementById('editUserModal');
-    const userForm = document.getElementById('editUserForm');
-    const closeUserBtn = document.getElementById('closeUserModal');
-
+    // --- User Edit Modal Logic ---
     function openUserEditModal(button) {
+        // Find elements just when the button is clicked
+        const userModal = document.getElementById('editUserModal');
+        const userForm = document.getElementById('editUserForm');
+        
         const id = button.dataset.id;
         const username = button.dataset.username;
         const email = button.dataset.email;
 
-        if(userForm) {
-            userForm.action = '/edit_user/' + id;
-        }
-        if(document.getElementById('modal_username')) {
-            document.getElementById('modal_username').value = username;
-        }
-        if(document.getElementById('modal_email')) {
-            document.getElementById('modal_email').value = email;
-        }
-        
-        if(userModal) {
-            userModal.classList.remove('hidden');
-        }
-    }
-    if (closeUserBtn) {
-        closeUserBtn.onclick = () => userModal.classList.add('hidden');
+        if (userForm) userForm.action = '/edit_user/' + id;
+        if (document.getElementById('modal_username')) document.getElementById('modal_username').value = username;
+        if (document.getElementById('modal_email')) document.getElementById('modal_email').value = email;
+        if (userModal) userModal.classList.remove('hidden');
     }
 
-    // --- Course Modal Logic ---
-    const courseModal = document.getElementById('editCourseModal');
-    const courseForm = document.getElementById('editCourseForm');
-    const closeCourseBtn = document.getElementById('closeCourseModal');
-
+    // --- Course Edit Modal Logic ---
     function openCourseEditModal(button) {
+        // Find elements just when the button is clicked
+        const courseModal = document.getElementById('editCourseModal');
+        const courseForm = document.getElementById('editCourseForm');
+
         const id = button.dataset.id;
         const title = button.dataset.title;
         const description = button.dataset.description;
         const imageUrl = button.dataset.image_url;
 
-        if(courseForm) {
-            courseForm.action = '/edit_course/' + id;
-        }
-        if(document.getElementById('modal_title')) {
-            document.getElementById('modal_title').value = title;
-        }
-        if(document.getElementById('modal_description')) {
-            document.getElementById('modal_description').value = description;
-        }
-        if(document.getElementById('modal_image_url')) {
-            document.getElementById('modal_image_url').value = imageUrl;
-        }
-
-        if(courseModal) {
-            courseModal.classList.remove('hidden');
-        }
-    }
-    if(closeCourseBtn) {
-        closeCourseBtn.onclick = () => courseModal.classList.add('hidden');
+        if (courseForm) courseForm.action = '/edit_course/' + id;
+        if (document.getElementById('modal_title')) document.getElementById('modal_title').value = title;
+        if (document.getElementById('modal_description')) document.getElementById('modal_description').value = description;
+        if (document.getElementById('modal_image_url')) document.getElementById('modal_image_url').value = imageUrl;
+        if (courseModal) courseModal.classList.remove('hidden');
     }
 
-    const addCourseModal = document.getElementById('addCourseModal');
-    const closeAddCourseBtn = document.getElementById('closeAddCourseModal');
-
+    // --- Add Course Modal Logic ---
     function openAddCourseModal() {
-        // We just need to show the modal, no data to populate
+        // Find elements just when the button is clicked
+        const addCourseModal = document.getElementById('addCourseModal');
+        const addCourseForm = document.getElementById('addCourseForm');
+
         if (addCourseModal) {
             addCourseModal.classList.remove('hidden');
-
-            // Optional: Clear form fields from previous attempts
-            document.getElementById('addCourseForm').reset();
+            if (addCourseForm) addCourseForm.reset(); // Clear form from previous attempts
         }
     }
-    if(closeAddCourseBtn) {
-        closeAddCourseBtn.onclick = () => addCourseModal.classList.add('hidden');
+
+    // --- General Modal Close Logic ---
+    // We find the buttons when the page loads, but only attach events if they exist.
+    const closeUserBtn = document.getElementById('closeUserModal');
+    if (closeUserBtn) closeUserBtn.onclick = () => document.getElementById('editUserModal').classList.add('hidden');
+
+    const closeCourseBtn = document.getElementById('closeCourseModal');
+    if (closeCourseBtn) closeCourseBtn.onclick = () => document.getElementById('editCourseModal').classList.add('hidden');
+    
+    const closeAddCourseBtn = document.getElementById('closeAddCourseModal');
+    if (closeAddCourseBtn) closeAddCourseBtn.onclick = () => document.getElementById('addCourseModal').classList.add('hidden');
+    
+    // Logic to close modal when clicking outside of it
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('editUserModal')) {
+            document.getElementById('editUserModal').classList.add('hidden');
+        }
+        if (event.target == document.getElementById('editCourseModal')) {
+            document.getElementById('editCourseModal').classList.add('hidden');
+        }
+        if (event.target == document.getElementById('addCourseModal')) {
+            document.getElementById('addCourseModal').classList.add('hidden');
+        }
     }
 
-    // general click-outside-to-close logic
-    window.onclick = function(event) {
-        if (event.target == userModal) { userModal.classList.add('hidden'); }
-        if (event.target == courseModal) { courseModal.classList.add('hidden'); }
-        if (event.target == addCourseModal) { addCourseModal.classList.add('hidden'); }
+    // Mobile Menu Logic
+    const menuBtn = document.getElementById('menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    if (menuBtn && sidebar && overlay) {
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
     }
 </script>
 
