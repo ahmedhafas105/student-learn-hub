@@ -5,21 +5,93 @@
 {% block content %}
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Welcome, {{ current_user.username }}!</h1>
+
+        {% if current_user.role == 'admin' %}
+            <p class="mt-2 text-gray-600">This is a preview of user view</p>
+        {% elif current_user.role == 'institution' %}
+            <p class="mt-2 text-gray-600">This is a preview of how users see your registered courses.</p>
+        {% else %}
         <p class="mt-2 text-gray-600">Start your learning journey by exploring our courses below.</p>
+        {% endif %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        
         {% for course in courses %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             <img src="{{ course.image_url }}" class="w-full h-48 object-cover" alt="{{ course.title }}">
-            <div class="p-6">
+            
+            <div class="p-4 border-b flex items-center gap-3">
+                <img src="{{ course.institution.logo_url or 'https://placehold.co/40x40/E2E8F0/4A5568?text=L' }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200" alt="{{ course.institution.username }}">
+                <span class="text-sm font-semibold text-gray-700">{{ course.institution.username }}</span>
+            </div>
+
+            <div class="p-6 flex flex-col flex-grow">
                 <h2 class="text-xl font-bold text-gray-800 mb-2">{{ course.title }}</h2>
-                <p class="text-gray-600 mb-4">{{ course.description }}</p>
-                <a href="#" class="inline-block bg-primary text-white font-medium px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">Explore Course</a>
+                <p class="text-gray-600 mb-4 flex-grow">{{ course.description }}</p>
+
+                <div class="mt-4 flex items-stretch gap-2">
+                    
+                    {% if current_user.role == 'user' %}
+                        {% if course.id in application_statuses %}
+                            {% set status = application_statuses[course.id] %}
+                            {% if status == 'Approved' %}
+                                <button class="flex-1 text-center bg-green-500 text-white font-medium px-4 py-2 rounded-md cursor-default" disabled>Enrolled</button>
+                            {% elif status == 'Pending' %}
+                                <button class="flex-1 text-center bg-gray-400 text-white font-medium px-4 py-2 rounded-md cursor-default" disabled>Pending</button>
+                            {% elif status == 'Rejected' %}
+                                <button class="flex-1 text-center bg-red-500 text-white font-medium px-4 py-2 rounded-md cursor-default" disabled>Rejected</button>
+                            {% endif %}
+                        {% else %}
+                            <form action="{{ url_for('apply_course', course_id=course.id) }}" method="POST" class="flex-1">
+                                <button type="submit" class="w-full h-full text-center bg-primary text-white font-medium px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">Apply Now</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button type="button" 
+                        class="flex-shrink-0 w-11 h-11 flex items-center justify-center bg-gray-200 text-gray-800 font-medium rounded-md hover:bg-gray-300 transition-colors"
+                        data-name="{{ course.institution.username }}"
+                        data-email="{{ course.institution.email }}"
+                        data-phone="{{ course.institution.phone_number }}"
+                        data-address="{{ course.institution.address }}"
+                        data-logo="{{ course.institution.logo_url or 'https://placehold.co/100x100/E2E8F0/4A5568?text=L' }}"
+                        onclick="openInstitutionModal(this)"
+                        title="View Institution Details">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                </div>
             </div>
         </div>
         {% endfor %}
-
     </div>
+{% endblock %}
+
+{% block modals %}
+<div id="institutionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-6 border w-full max-w-lg shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-start">
+             <h3 class="text-2xl font-bold text-gray-900" id="modal-inst-name">Institution Name</h3>
+             <button id="closeInstitutionModal" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+             </button>
+        </div>
+        <div class="mt-4 flex flex-col md:flex-row items-center gap-6">
+            <img id="modal-inst-logo" src="" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 flex-shrink-0" alt="Logo">
+            <ul class="text-gray-700 space-y-3">
+                <li class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-gray-500">mail</span>
+                    <span id="modal-inst-email">email@example.com</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-gray-500">call</span>
+                    <span id="modal-inst-phone">+123456789</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-gray-500">location_on</span>
+                    <span id="modal-inst-address">123 Street, City, Country</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}
