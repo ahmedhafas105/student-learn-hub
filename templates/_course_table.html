@@ -4,7 +4,7 @@
             <th scope="col" class="px-6 py-3">ID</th>
             <th scope="col" class="px-6 py-3">Title</th>
             <th scope="col" class="px-6 py-3">Description</th>
-            <th scope="col" class="px-6 py-3 text-right">Actions</th>
+            <th scope="col" class="px-10 py-3 text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -13,19 +13,22 @@
             <td class="px-6 py-4 font-medium text-slate-900">{{ course.id }}</td>
             <td class="px-6 py-4">{{ course.title }}</td>
             <td class="px-6 py-4">{{ course.description[:80] }}...</td>
-            <td class="px-6 py-4 text-right">
+            <td class="px-18 py-4 flex items-center justify-center gap-x-2">
                 <button type="button" 
-                    class="font-medium text-primary hover:underline"
+                    class="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-100 rounded-full"
                     data-id="{{ course.id }}"
                     data-title="{{ course.title }}"
                     data-description="{{ course.description }}"
                     data-image_url="{{ course.image_url }}"
-                    onclick="openCourseEditModal(this)">
-                    Edit
+                    onclick="openCourseEditModal(this)"
+                    title="Edit Course">
+                    <span class="material-symbols-outlined">edit</span>
                 </button>
-                <span class="mx-1 text-slate-300">|</span>
+                
                 <form id="delete-form-course-{{ course.id }}" action="{{ url_for('delete_course', course_id=course.id) }}" method="POST" class="inline-block">
-                    <button type="button" onclick="showDeleteConfirm('delete-form-course-{{ course.id }}')" class="font-medium text-red-500 hover:underline">Delete</button>
+                    <button type="button" onclick="showDeleteConfirm('delete-form-course-{{ course.id }}')" class="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-100 rounded-full" title="Delete Course">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
                 </form>
             </td>
         </tr>

@@ -23,23 +23,28 @@
 </head>
 <body class="bg-gray-100 font-display text-slate-800">
 
-<div class="relative min-h-screen lg:flex">
-
+<div>
     {% if current_user.is_authenticated %}
+        <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
         <aside id="sidebar" class="bg-white flex-col w-64 p-6 fixed inset-y-0 left-0
-                                   lg:relative lg:translate-x-0 
-                                   -translate-x-full transition-transform duration-300 ease-in-out z-30">
+                                   -translate-x-full lg:translate-x-0 
+                                   transition-transform duration-300 ease-in-out z-30">
             <div class="flex items-center gap-3 h-16 flex-shrink-0">
                 <div class="w-8 h-8 bg-primary rounded-full"></div>
                 <h1 class="font-bold text-xl text-slate-900">My App</h1>
             </div>
             <nav class="flex flex-col gap-2 mt-8">
-                {% if current_user.role == 'admin' %}
-                    <a href="{{ url_for('admin', view='users') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                {% if current_user.role in ['admin', 'institution'] %}
+                    <a href="{{ url_for('admin') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'admin' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
                         <span class="material-symbols-outlined">shield_person</span>
                         <span class="text-sm font-medium">Admin Panel</span>
                     </a>
                 {% endif %}
+                <a href="{{ url_for('profile') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'profile' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="text-sm font-medium">Profile</span>
+                </a>
                 <a href="{{ url_for('user_home') }}" class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-primary/10 hover:text-primary {% if request.endpoint == 'user_home' %}bg-primary/10 text-primary{% else %}text-slate-600{% endif %}">
                     <span class="material-symbols-outlined">home</span>
                     <span class="text-sm font-medium">Home</span>
@@ -51,7 +56,7 @@
             </nav>
         </aside>
     {% else %}
-        <nav class="bg-white shadow-sm w-full absolute">
+        <nav class="bg-white shadow-sm w-full absolute top-0 left-0 z-10">
             <div class="container mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center gap-3">
@@ -67,7 +72,7 @@
         </nav>
     {% endif %}
 
-    <div class="flex-1 flex flex-col">
+    <div class="{% if current_user.is_authenticated %}lg:ml-64{% endif %}">
         {% if current_user.is_authenticated %}
             <header class="bg-white p-4 flex justify-between items-center lg:hidden shadow-md">
                 <div class="flex items-center gap-3">
@@ -87,8 +92,6 @@
         </main>
     </div>
 </div>
-
-<div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
 
 {% block modals %}{% endblock %}
 
@@ -156,6 +159,31 @@
         }
     }
 
+    // --- Institution Details Modal Logic ---
+    function openInstitutionModal(button) {
+        // Find the modal and its elements
+        const institutionModal = document.getElementById('institutionModal');
+        
+        // Get data from the button's data-* attributes
+        const name = button.dataset.name;
+        const email = button.dataset.email;
+        const phone = button.dataset.phone;
+        const address = button.dataset.address;
+        const logo = button.dataset.logo;
+
+        // Populate the modal with the data
+        if (institutionModal) {
+            document.getElementById('modal-inst-name').innerText = name;
+            document.getElementById('modal-inst-logo').src = logo;
+            document.getElementById('modal-inst-email').innerText = email;
+            document.getElementById('modal-inst-phone').innerText = phone;
+            document.getElementById('modal-inst-address').innerText = address;
+            
+            // Show the modal
+            institutionModal.classList.remove('hidden');
+        }
+    }
+
     // --- General Modal Close Logic ---
     // We find the buttons when the page loads, but only attach events if they exist.
     const closeUserBtn = document.getElementById('closeUserModal');
@@ -166,6 +194,11 @@
     
     const closeAddCourseBtn = document.getElementById('closeAddCourseModal');
     if (closeAddCourseBtn) closeAddCourseBtn.onclick = () => document.getElementById('addCourseModal').classList.add('hidden');
+
+    const closeInstitutionBtn = document.getElementById('closeInstitutionModal');
+    if (closeInstitutionBtn) {
+        closeInstitutionBtn.onclick = () => document.getElementById('institutionModal').classList.add('hidden');
+    }
     
     // Logic to close modal when clicking outside of it
     window.onclick = function(event) {
@@ -177,6 +210,9 @@
         }
         if (event.target == document.getElementById('addCourseModal')) {
             document.getElementById('addCourseModal').classList.add('hidden');
+        }
+        if (event.target == document.getElementById('institutionModal')) { 
+            document.getElementById('institutionModal').classList.add('hidden'); 
         }
     }
 
