@@ -1,2 +1,10 @@
-# Ignore all SQLite database files
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore the SQLite database file
 *.db
+
+# === THIS IS THE IMPORTANT LINE FOR YOUR IMAGES ===
+# Ignore the user-uploaded images folder
+/static/uploads/
