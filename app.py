@@ -1,15 +1,23 @@
+import os
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a_very_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+# --- CONFIGURATION FOR FILE UPLOADS ---
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -25,7 +33,7 @@ class User(UserMixin, db.Model):
     country = db.Column(db.String(100), nullable=True)
     phone_number = db.Column(db.String(20), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    logo_url = db.Column(db.String(200), nullable=True)
+    profile_picture = db.Column(db.String(100), nullable=False, default='default.jpg') # Add default profile picture
     courses = db.relationship('Course', backref='institution', lazy=True, cascade="all, delete-orphan")
     applications = db.relationship('CourseApplication', backref='applicant', lazy=True, cascade="all, delete-orphan")
 
@@ -91,7 +99,6 @@ class InstitutionSignupForm(SignupForm):
     country = StringField('Country', validators=[DataRequired()])
     phone_number = StringField('Phone Number', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    logo_url = StringField('Logo URL (optional)')
     submit = SubmitField('Register as Institution')
 
 class LoginForm(FlaskForm):
@@ -130,12 +137,23 @@ class CourseForm(FlaskForm):
 class ProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=80)])
     email = StringField('Email', validators=[DataRequired(), Email()])
+    picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'gif'])])
     address = StringField('Address')
     country = StringField('Country')
     phone_number = StringField('Phone Number')
     description = TextAreaField('Description')
-    logo_url = StringField('Logo URL')
-    submit = SubmitField('Update Profile')
+    submit_profile = SubmitField('Update Profile')
+
+# NEW: Form for changing password
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    confirm_new_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
+    submit_password = SubmitField('Change Password')
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # --- ROUTES ---
 @app.route('/')
@@ -190,8 +208,7 @@ def signup():
                 new_institution = User(
                     username=institution_form.username.data, email=institution_form.email.data, role='institution',
                     address=institution_form.address.data, country=institution_form.country.data,
-                    phone_number=institution_form.phone_number.data, description=institution_form.description.data,
-                    logo_url=institution_form.logo_url.data
+                    phone_number=institution_form.phone_number.data, description=institution_form.description.data
                 )
                 new_institution.set_password(institution_form.password.data)
                 db.session.add(new_institution)
@@ -234,39 +251,58 @@ def logout():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    form = ProfileForm()
-    if form.validate_on_submit():
-        current_user.username = form.username.data
-        current_user.email = form.email.data
+    profile_form = ProfileForm()
+    password_form = ChangePasswordForm()
+
+    if profile_form.submit_profile.data and profile_form.validate_on_submit():
+        current_user.username = profile_form.username.data
+        current_user.email = profile_form.email.data
         if current_user.role == 'institution':
-            current_user.address = form.address.data
-            current_user.country = form.country.data
-            current_user.phone_number = form.phone_number.data
-            current_user.description = form.description.data
-            current_user.logo_url = form.logo_url.data
+            current_user.address = profile_form.address.data
+            current_user.country = profile_form.country.data
+            current_user.phone_number = profile_form.phone_number.data
+            current_user.description = profile_form.description.data
+
+        # Handle file upload
+        if profile_form.picture.data and allowed_file(profile_form.picture.data.filename):
+            picture_file = secure_filename(profile_form.picture.data.filename)
+            picture_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], picture_file)
+            profile_form.picture.data.save(picture_path)
+            current_user.profile_picture = picture_file
+
         db.session.commit()
         flash('Your profile has been updated!', 'success')
         return redirect(url_for('profile'))
     
-    # Pre-populate form with existing data on GET request
-    form.username.data = current_user.username
-    form.email.data = current_user.email
-    if current_user.role == 'institution':
-        form.address.data = current_user.address
-        form.country.data = current_user.country
-        form.phone_number.data = current_user.phone_number
-        form.description.data = current_user.description
-        form.logo_url.data = current_user.logo_url
+    if password_form.submit_password.data and password_form.validate_on_submit():
+        # Handle password change
+        if current_user.check_password(password_form.current_password.data):
+            current_user.set_password(password_form.new_password.data)
+            db.session.commit()
+            flash('Your password has been changed successfully!', 'success')
+            return redirect(url_for('profile'))
+        else:
+            flash('Current password is incorrect.', 'danger')
 
-    pending_applications = []
-    enrolled_courses = []
-    approved_applications = []
+    # Pre-populate form with existing data on GET request
+    profile_form.username.data = current_user.username
+    profile_form.email.data = current_user.email
+    if current_user.role == 'institution':
+        profile_form.address.data = current_user.address
+        profile_form.country.data = current_user.country
+        profile_form.phone_number.data = current_user.phone_number
+        profile_form.description.data = current_user.description
+
+     # Fetch data for display based on role
+    pending_applications, enrolled_courses, approved_applications = [], [], []
 
     if current_user.role == 'user':
+        # Fetch user application data
         applications = CourseApplication.query.filter_by(user_id=current_user.id).all()
         pending_applications = [app for app in applications if app.status == 'Pending']
         enrolled_courses = [app for app in applications if app.status == 'Approved']
     elif current_user.role == 'institution':
+        # ... (fetch institution approved application data)
         approved_applications = db.session.query(CourseApplication).join(Course).filter(
             Course.institution_id == current_user.id,
             CourseApplication.status == 'Approved'
@@ -274,7 +310,8 @@ def profile():
 
     return render_template(
         'profile.html', 
-        form=form,
+        profile_form=profile_form,
+        password_form=password_form,
         pending_applications=pending_applications,
         enrolled_courses=enrolled_courses,
         approved_applications=approved_applications
@@ -307,7 +344,7 @@ def admin():
     # Authorization check
     if current_user.role not in ['admin', 'institution']:
         flash('You do not have permission to access this page.', 'danger')
-        return redirect(url_for('home'))
+        return redirect(url_for('user_home'))
     
     view = request.args.get('view', 'courses' if current_user.role == 'institution' else 'users')
     data = None
