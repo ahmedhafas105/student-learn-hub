@@ -2,74 +2,88 @@
 {% block title %}My Profile{% endblock %}
 {% block content %}
 
-{% if current_user.role == 'user' %}
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">My Profile</h1>
-        <p class="mt-2 text-gray-600">Welcome, {{ current_user.username }}!</p>
+<div class="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center gap-6">
+    <div class="relative cursor-pointer" onclick="openImagePreview('{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}')">  <!-- This is not an error.. here vs code wrongly identified as syntax error... -->
+        <img id="profile-pic-preview" src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
+             alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+        <label for="picture" class="w-10 h-10 absolute bottom-1 right-1 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90" title="Change picture">
+            <span class="material-symbols-outlined">photo_camera</span>
+        </label>
     </div>
     <div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">My Courses</h2>
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Enrolled Courses</h3>
-        {% if enrolled_courses %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {% for app in enrolled_courses %}
-                <div class="bg-white rounded-lg shadow-md overflow-hidden"><img src="{{ app.course.image_url }}" class="w-full h-48 object-cover" alt="{{ app.course.title }}"><div class="p-6"><h4 class="text-lg font-bold text-gray-800">{{ app.course.title }}</h4><p class="mt-2 text-sm text-gray-600">Status: <span class="font-medium text-green-600">{{ app.status }}</span></p></div></div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-500">You are not yet enrolled in any courses.</p>
-        {% endif %}
-        <hr class="my-8">
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Pending Applications</h3>
-        {% if pending_applications %}
-            <ul class="space-y-3">
-            {% for app in pending_applications %}
-                <li class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center"><span class="font-medium text-gray-700">{{ app.course.title }}</span><span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">{{ app.status }}</span></li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-gray-500">You have no pending applications.</p>
-        {% endif %}
+        <h1 class="text-3xl font-bold text-gray-800 text-center md:text-left">{{ current_user.username }}</h1>
+        <p class="mt-1 text-gray-600 text-center md:text-left">{{ current_user.email }}</p>
+    </div>
+</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Edit Details</h2>
+            <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data" novalidate>
+                {{ profile_form.hidden_tag() }}
+                <input type="file" name="picture" id="picture" class="hidden" onchange="previewImage(event)">
+                
+                <div class="space-y-4">
+                    <div>{{ profile_form.username.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.username(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                    <div>{{ profile_form.email.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.email(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                    {% if current_user.role == 'institution' %}
+                        <div>{{ profile_form.phone_number.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.phone_number(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                        <div>{{ profile_form.address.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.address(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                        <div>{{ profile_form.country.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.country(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                        <div>{{ profile_form.description.label(class="block text-sm font-medium text-gray-700") }}{{ profile_form.description(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm", rows=4) }}</div>
+                    {% endif %}
+                    <div>{{ profile_form.submit_profile(class="w-full justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90") }}</div>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Change Password</h2>
+            <form method="POST" action="{{ url_for('profile') }}" novalidate>
+                {{ password_form.hidden_tag() }}
+                <div class="space-y-4">
+                    <div>{{ password_form.current_password.label(class="block text-sm font-medium text-gray-700") }}{{ password_form.current_password(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                    <div>{{ password_form.new_password.label(class="block text-sm font-medium text-gray-700") }}{{ password_form.new_password(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                    <div>{{ password_form.confirm_new_password.label(class="block text-sm font-medium text-gray-700") }}{{ password_form.confirm_new_password(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
+                    <div>{{ password_form.submit_password(class="w-full justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800") }}</div>
+                </div>
+            </form>
+        </div>
     </div>
 
-{% else %}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1">
+    <div class="space-y-8">
+        {% if current_user.role == 'user' %}
             <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Profile Details</h2>
-                <form method="POST" action="{{ url_for('profile') }}" novalidate>
-                    {{ form.hidden_tag() }}
-                    <div class="space-y-4">
-                        <div>{{ form.username.label(class="block text-sm font-medium text-gray-700") }}{{ form.username(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                        <div>{{ form.email.label(class="block text-sm font-medium text-gray-700") }}{{ form.email(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                        {% if current_user.role == 'institution' %}
-                            <div>{{ form.phone_number.label(class="block text-sm font-medium text-gray-700") }}{{ form.phone_number(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                            <div>{{ form.address.label(class="block text-sm font-medium text-gray-700") }}{{ form.address(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                            <div>{{ form.country.label(class="block text-sm font-medium text-gray-700") }}{{ form.country(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                            <div>{{ form.description.label(class="block text-sm font-medium text-gray-700") }}{{ form.description(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm", rows=4) }}</div>
-                            <div>{{ form.logo_url.label(class="block text-sm font-medium text-gray-700") }}{{ form.logo_url(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm") }}</div>
-                        {% endif %}
-                        <div>{{ form.submit(class="w-full justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90") }}</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Enrolled Courses</h2>
+                {% if enrolled_courses %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for app in enrolled_courses %}
+                        <div class="bg-gray-50 rounded-lg border overflow-hidden"><img src="{{ app.course.image_url }}" class="w-full h-40 object-cover" alt="{{ app.course.title }}"><div class="p-4"><h4 class="text-md font-bold text-gray-800">{{ app.course.title }}</h4><p class="mt-2 text-sm text-gray-600">Status: <span class="font-medium text-green-600">{{ app.status }}</span></p></div></div>
+                        {% endfor %}
                     </div>
-                </form>
+                {% else %}<p class="text-gray-500">You are not enrolled in any courses.</p>{% endif %}
             </div>
-        </div>
-        {% if current_user.role == 'institution' %}
-        <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Pending Applications</h2>
+                {% if pending_applications %}
+                    <ul class="space-y-3">
+                    {% for app in pending_applications %}
+                        <li class="bg-gray-50 p-4 rounded-lg border flex justify-between items-center"><span class="font-medium text-gray-700">{{ app.course.title }}</span><span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">{{ app.status }}</span></li>
+                    {% endfor %}
+                    </ul>
+                {% else %}<p class="text-gray-500">You have no pending applications.</p>{% endif %}
+            </div>
+
+        {% elif current_user.role == 'institution' %}
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">My Courses</h2>
                 {% if current_user.courses %}
                     <ul class="space-y-3">
                         {% for course in current_user.courses %}
-                        <li class="p-3 rounded-md border flex items-center gap-4">
-                            <img src="{{ course.image_url }}" class="w-20 h-12 object-cover rounded-md" alt="">
-                            <span class="font-medium text-gray-700">{{ course.title }}</span>
-                        </li>
+                        <li class="p-3 rounded-md border flex items-center gap-4"><img src="{{ course.image_url }}" class="w-20 h-12 object-cover rounded-md" alt=""><span class="font-medium text-gray-700">{{ course.title }}</span></li>
                         {% endfor %}
                     </ul>
-                {% else %}
-                    <p class="text-gray-500">You have not created any courses yet.</p>
-                {% endif %}
+                {% else %}<p class="text-gray-500">You have not created any courses yet.</p>{% endif %}
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Approved Students</h2>
@@ -77,20 +91,78 @@
                      <ul class="space-y-3">
                         {% for app in approved_applications %}
                         <li class="p-3 rounded-md border flex justify-between items-center">
-                            <div>
-                                <p class="font-medium text-gray-800">{{ app.applicant.username }}</p>
-                                <p class="text-sm text-gray-500">{{ app.course.title }}</p>
-                            </div>
+                            <div><p class="font-medium text-gray-800">{{ app.applicant.username }}</p><p class="text-sm text-gray-500">{{ app.course.title }}</p></div>
                             <span class="text-sm font-medium text-green-600">{{ app.status }}</span>
                         </li>
                         {% endfor %}
                     </ul>
-                {% else %}
-                    <p class="text-gray-500">No students have been approved for your courses yet.</p>
-                {% endif %}
+                {% else %}<p class="text-gray-500">No students have been approved for your courses yet.</p>{% endif %}
             </div>
-        </div>
         {% endif %}
     </div>
-{% endif %}
+
+<script>
+    // This function for the file input is correct
+    function previewImage(event) {
+        if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('profile-pic-preview');
+                output.src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    };
+
+    // --- CORRECTED Lightbox/Modal Logic ---
+
+    function openImagePreview(imageUrl) {
+        // Find the elements JUST when the function is called
+        const imageModal = document.getElementById('imagePreviewModal');
+        const lightboxImage = document.getElementById('lightbox-image');
+
+        if (imageModal && lightboxImage) {
+            lightboxImage.src = imageUrl;
+            imageModal.classList.remove('hidden');
+            setTimeout(() => {
+                imageModal.classList.remove('opacity-0');
+                lightboxImage.classList.remove('scale-95');
+            }, 10);
+        }
+    }
+
+    function closeImagePreview() {
+        // Find the elements JUST when the function is called
+        const imageModal = document.getElementById('imagePreviewModal');
+        const lightboxImage = document.getElementById('lightbox-image');
+
+        if (imageModal && lightboxImage) {
+            imageModal.classList.add('opacity-0');
+            lightboxImage.classList.add('scale-95');
+            setTimeout(() => {
+                imageModal.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    // We add the event listener to the window, which is always available.
+    // This way we don't need to find the modal when the page first loads.
+    window.addEventListener('click', function(event) {
+        const imageModal = document.getElementById('imagePreviewModal');
+        if (event.target === imageModal) {
+            closeImagePreview();
+        }
+    });
+</script>
+{% endblock %}
+
+{% block modals %}
+<div id="imagePreviewModal" 
+     class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden
+            opacity-0 transition-opacity duration-300 ease-in-out">
+    <button onclick="closeImagePreview()" class="absolute top-4 right-4 text-white text-4xl">&times;</button>
+    <img id="lightbox-image" src="" alt="Profile picture preview" 
+         class="max-w-full max-h-full rounded-lg shadow-lg
+                transform scale-95 transition-transform duration-300 ease-in-out">
+</div>
 {% endblock %}
