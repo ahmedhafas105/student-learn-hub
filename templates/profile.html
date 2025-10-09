@@ -2,11 +2,24 @@
 {% block title %}My Profile{% endblock %}
 {% block content %}
 
-<div class="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center gap-6">
+<div class="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row items-center gap-6 transition-transform duration-300 hover:scale-105">
     <div class="relative cursor-pointer" onclick="openImagePreview('{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}')">  <!-- This is not an error.. here vs code wrongly identified as syntax error... -->
-        <img id="profile-pic-preview" src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
-             alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
-        <label for="picture" class="w-10 h-10 absolute bottom-1 right-1 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90" title="Change picture">
+        {% if current_user.profile_picture and current_user.profile_picture != 'default.jpg' %}
+        <img id="profile-pic-preview"
+            src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
+            alt="Profile Picture" 
+            class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+        {% else %}
+            <img id="profile-pic-preview" 
+             src="https://placehold.co/128x128/137fec/FFFFFF?text={{ current_user.username[0]|upper }}" 
+             alt="Profile Picture" 
+             class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+        {% endif %}
+
+        <label for="picture" 
+                class="w-10 h-10 absolute bottom-1 right-1 bg-black text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-500" 
+                title="Change picture"
+                onclick="event.stopPropagation()">
             <span class="material-symbols-outlined">photo_camera</span>
         </label>
     </div>
@@ -16,8 +29,8 @@
     </div>
 </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-start">
+        <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Edit Details</h2>
             <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data" novalidate>
                 {{ profile_form.hidden_tag() }}
@@ -37,7 +50,7 @@
             </form>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Change Password</h2>
             <form method="POST" action="{{ url_for('profile') }}" novalidate>
                 {{ password_form.hidden_tag() }}
@@ -53,7 +66,7 @@
 
     <div class="space-y-8">
         {% if current_user.role == 'user' %}
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Enrolled Courses</h2>
                 {% if enrolled_courses %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -63,7 +76,7 @@
                     </div>
                 {% else %}<p class="text-gray-500">You are not enrolled in any courses.</p>{% endif %}
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Pending Applications</h2>
                 {% if pending_applications %}
                     <ul class="space-y-3">
@@ -75,7 +88,7 @@
             </div>
 
         {% elif current_user.role == 'institution' %}
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">My Courses</h2>
                 {% if current_user.courses %}
                     <ul class="space-y-3">
@@ -85,7 +98,7 @@
                     </ul>
                 {% else %}<p class="text-gray-500">You have not created any courses yet.</p>{% endif %}
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Approved Students</h2>
                 {% if approved_applications %}
                      <ul class="space-y-3">

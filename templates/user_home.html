@@ -3,7 +3,7 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8 transition-transform duration-300 hover:scale-105">
         <h1 class="text-3xl font-bold text-gray-800">Welcome, {{ current_user.username }}!</h1>
 
         {% if current_user.role == 'admin' %}
@@ -17,7 +17,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for course in courses %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:scale-105">
             <img src="{{ course.image_url }}" class="w-full h-48 object-cover" alt="{{ course.title }}">
             
             <div class="p-4 border-b flex items-center gap-3">
@@ -62,7 +62,7 @@
                         {% else %}
                             data-logo="https://placehold.co/100x100/137fec/FFFFFF?text={{ course.institution.username[0]|upper }}"
                         {% endif %}
-                        
+
                         onclick="openInstitutionModal(this)"
                         title="View Institution Details">
                         <span class="material-symbols-outlined">info</span>
